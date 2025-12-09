@@ -2,7 +2,7 @@
 
 This project demonstrates a **Temporal Workflow** that orchestrates AI Agents to generate a personalized city travel guide.
 
-It is designed as a durable, scalable Temporal application. Instead of running as a single script, each step of the process is an independent Activity that can be retried, timed out, or scaled independently.
+It is designed as a durable, scalable Temporal application. Instead of running as a single script, each step of the process is an independent Activity that can be retried, timed out, or scaled independently. This is based on the Tensorlake quickstart on the tensorlakeai/tensorlake repo.
 
 ## Overview
 
