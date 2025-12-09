@@ -7,16 +7,12 @@ from agents import Agent, Runner
 # This tool allows the agent to perform real-time internet searches.
 from agents.tool import WebSearchTool
 
-# Initialize the standard OpenAI client. 
-# While the Agents created below manage their own connections, 
-# this client is available for other direct LLM needs if required.
-client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-
 # ----------------------------------------------------------------------------
 # Temporal Activity: Get Weather
 # ----------------------------------------------------------------------------
 @activity.defn
 async def get_weather(city: str) -> str:
+    client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     """
     Activity to fetch the current weather using an AI Agent with web search capabilities.
     """
@@ -45,6 +41,7 @@ async def get_weather(city: str) -> str:
 # ----------------------------------------------------------------------------
 @activity.defn
 async def get_activity(city: str, weather: str) -> str:
+    client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     """
     Activity to suggest a travel activity based on the city and current weather.
     """
@@ -67,6 +64,7 @@ async def get_activity(city: str, weather: str) -> str:
 # ----------------------------------------------------------------------------
 @activity.defn
 async def create_guide(city: str, weather: str, activity_text: str) -> str:
+    client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     """
     Activity to synthesize the weather and activity into a final formatted guide.
     It also handles unit conversion (Fahrenheit <-> Celsius) based on the locale.
