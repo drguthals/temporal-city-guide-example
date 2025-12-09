@@ -12,16 +12,10 @@ async def get_client() -> Client:
     tls_config = None
     
     if cert_raw and key_raw:
-        # CRITICAL: Fix newlines if the cloud provider escaped them.
-        # Many secret managers turn:
-        #   "-----BEGIN CERTIFICATE-----\nMIIDT..."
-        # into:
-        #   "-----BEGIN CERTIFICATE-----\\nMIIDT..."
-        # We replace the literal characters "\n" with actual newlines.
+        # Fix newlines if the cloud provider/GitHub escaped them
         cert_str = cert_raw.replace("\\n", "\n")
         key_str = key_raw.replace("\\n", "\n")
 
-        # Convert the string to bytes, which the SDK expects
         tls_config = TLSConfig(
             client_cert=cert_str.encode("utf-8"),
             client_private_key=key_str.encode("utf-8"),
