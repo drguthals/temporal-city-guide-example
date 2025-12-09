@@ -1,7 +1,7 @@
 import asyncio
 import os
 import sys
-from temporalio.client import Client
+from config import get_client
 
 async def main():
     if len(sys.argv) > 1:
@@ -10,7 +10,7 @@ async def main():
         city = "San Francisco"
 
     # 1. Connect to the Temporal Server
-    client = await Client.connect("localhost:7233")
+    client = await get_client()
 
     print(f"Generating city guide for: {city}...")
     

@@ -1,2 +1,22 @@
 /__pycache__
 /venv
+ca.key
+ca.pem
+ca.srl
+client.csr
+client.key
+client.pem
+
+# 1. Load your certificates into variables so they are easy to pass
+export KEY_DATA=$(cat client.key)
+export CERT_DATA=$(cat client.pem)
+
+# 2. Run the Docker container
+# Replace 'namespace.a1b2c' with your actual Namespace
+docker run \
+  -e TEMPORAL_HOST="city-guide.rnfqm.tmprl.cloud:7233" \
+  -e TEMPORAL_NAMESPACE="city-guide.rnfqm" \
+  -e TEMPORAL_CLIENT_KEY="$KEY_DATA" \
+  -e TEMPORAL_CLIENT_CERT="$CERT_DATA" \
+  -e OPENAI_API_KEY="$OPENAI_API_KEY" \
+  ghcr.io/drguthals/temporal-city-guide-example:latest

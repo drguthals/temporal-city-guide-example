@@ -1,8 +1,8 @@
 import asyncio
 import os
 import sys
-from temporalio.client import Client
 from temporalio.worker import Worker
+from config import get_client
 from activities import get_weather, get_activity, create_guide
 from workflows import CityGuideWorkflow
 
@@ -13,7 +13,7 @@ async def main():
         # In a real deployment you might exit, but for dev we'll just warn
     
     # 1. Connect to the Temporal server acting as the task queue manager.
-    client = await Client.connect("localhost:7233")
+    client = await get_client()
 
     # 2. Create the Worker.
     # The worker listens to the "city-guide-task-queue".
