@@ -20,3 +20,4 @@ docker run \
   -e TEMPORAL_CLIENT_CERT="$CERT_DATA" \
   -e OPENAI_API_KEY="$OPENAI_API_KEY" \
   ghcr.io/drguthals/temporal-city-guide-example:latest
+WARP.md
