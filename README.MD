@@ -1,84 +1,67 @@
-# City Guide Workflow
+# Temporal + OpenAI Agents Plugin
 
-This project demonstrates a **Temporal Workflow** that orchestrates AI Agents to generate a personalized city travel guide.
+This project demonstrates how to **durably orchestrate an OpenAI Agent** using Temporal. 
 
-It is designed as a durable, scalable Temporal application. Instead of running as a single script, each step of the process is an independent Activity that can be retried, timed out, or scaled independently. This is based on the Tensorlake quickstart on the tensorlakeai/tensorlake repo.
+Instead of writing a manual multi-step workflow, we use the **`temporalio.contrib.openai_agents`** plugin to deploy a single Autonomous Agent (`CityGuideAgent`) that automatically calls Temporal Activities as "Tools".
 
-## Overview
+## Key Concepts
 
-The workflow coordinates three distinct steps (Activities):
-1.  **Get Weather**: An AI Agent uses a web search tool to find the current weather for a given city.
-2.  **Get Activity**: An AI Agent suggests an activity based on the retrieved weather.
-3.  **Create Guide**: An AI Agent synthesizes the information into a friendly, formatted guide, converting temperature units if necessary.
-
-## Prerequisites
-
-- **Python 3.10+**
-- **Temporal CLI** (to run the dev server)
-  ```bash
-  brew install temporal
-  ```
-- **OpenAI API Key** (set as an environment variable)
-  ```bash
-  export OPENAI_API_KEY="sk-..."
-  ```
-- **Dependencies**
-  ```bash
-  pip install temporalio openai-agents
-  ```
+1.  **Durable Agent**: The Agent's "Model Context" (chat history) is preserved durably. If the worker crashes mid-conversation, it resumes exactly where it left off.
+2.  **Activities as Tools**: We simply pass our Temporal Activities (`get_weather`) to the Agent logic. The SDK automatically converts them into OpenAI function definitions.
+3.  **Human-in-the-Loop (Implicit)**: Because every tool call is a Temporal Activity, you get automatic retries, timeouts, and visibility for every single action the AI takes.
 
 ## Project Structure
 
-- `activities.py`: Defines the Temporal Activities. Each activity wraps an AI Agent (from `openai-agents`) that performs a specific task using a Web Search tool.
-- `workflows.py`: Defines the Temporal Workflow (`CityGuideWorkflow`). It orchestrates the execution of the activities in a specific order.
-- `worker.py`: The worker process that connects to the Temporal Server and listens for tasks (workflows and activities) to execute.
-- `starter.py`: A client script that triggers the workflow execution.
+- **`workflows.py`**: Defines `CityGuideAgent`. It initializes an `Agent` with specific instructions and tools, then passes control to `Runner.run()`.
+- **`activities.py`**: Defines the "Tools". 
+    - `get_weather`: Simulates a weather API (using a sub-agent).
+    - `lookup_local_activities`: Simulates a local event search (using a sub-agent).
+- **`worker.py`**: Connects to Temporal with the `OpenAIAgentsPlugin` enabled and hosts the workflow/activities.
+- **`starter.py`**: Starts the `CityGuideAgent` workflow for a specific city.
+
+## Prerequisites
+
+- Python 3.10+
+- [Temporal CLI](https://docs.temporal.io/cli) installed.
+- OpenAI API Key.
 
 ## How to Run
 
-1.  **Start the Temporal Server**
+1.  **Start Temporal Server**
     ```bash
     temporal server start-dev
     ```
-    The UI will be available at http://localhost:8233.
 
-2.  **Start the Worker**
-    Open a new terminal and run:
+2.  **Install Dependencies**
     ```bash
-    # Ensure OPENAI_API_KEY is set
+    # Ensure you have the agent SDK installed (adjust version if needed)
+    pip install temporalio openai-agents
+    ```
+
+3.  **Start the Worker**
+    ```bash
+    export OPENAI_API_KEY="sk-..."
     python worker.py
     ```
 
-3.  **Run the Workflow**
-    Open another terminal and run:
+4.  **Run the Agent**
     ```bash
-    # You can specify a city as an argument (default is San Francisco)
-    python starter.py "Tokyo, Japan"
+    python starter.py "Paris"
     ```
 
-## Example Output
-```md
-(venv) sarahguthals@Sarahs-MacBook-Pro-3 temporal % python3 starter.py "Milan, Italy"
-Generating city guide for: Milan, Italy...
+## What Happens?
 
-==================================================
-CITY GUIDE
-==================================================
+1.  The Workflow starts the **City Guide Agent**.
+2.  The Agent thinks: *"I need to check the weather in Paris first."*
+3.  It calls the `get_weather` tool.
+    - **Temporal executes `get_weather` as an Activity.**
+4.  The Activity returns "55F and Rainy".
+5.  The Agent thinks: *"Okay, it's rainy. I should look for indoor activities."*
+6.  It calls the `lookup_local_activities` tool with context "indoor".
+    - **Temporal executes `lookup_local_activities`.**
+7.  The Agent receives the list and writes the final itinerary.
+8.  The workflow completes and returns the guide.
 
-Milan, Italy uses Celsius for temperature.
+## Visibility
 
-Today in Milan, it’s foggy with a temperature around **3 °C**, and there’s a Yellow Fog Warning in effect across Lombardy until 11:59 PM. For a cozy and inspiring escape from the mist, step inside the Museo Nazionale Scienza e Tecnologia “Leonardo da Vinci.” It’s the largest science and technology museum in Italy, packed with incredible exhibits on Leonardo’s inventions and early technologies—perfect for staying warm and entertained on a foggy day!
-
-(venv) sarahguthals@Sarahs-MacBook-Pro-3 temporal % python3 starter.py "San Francisco"
-Generating city guide for: San Francisco...
-
-==================================================
-CITY GUIDE
-==================================================
-
-San Francisco typically uses Fahrenheit for weather reports.
-
-Here’s your friendly guide for today: With cool, partly cloudy weather in the mid- to upper-40s °F (around 46 °F currently), it’s a perfect evening to bundle up and head downtown for Let’s Glow SF—the city’s dazzling holiday projection-art festival. Enjoy the outdoor light displays on iconic buildings, sip hot chocolate, and catch some live music in the festive, crisp Bay Area air. Don’t forget to dress warmly, especially as fog may roll in later! Let me know if you need directions or tips for getting around town.
-(venv) sarahguthals@Sarahs-MacBook-Pro-3 temporal % python3 starter.py
-Generating city guide for: San Francisco...
-```
+Navigate to [http://localhost:8233](http://localhost:8233) to see the Agent in action! You will see the Workflow Execution `CityGuideAgent` and the individual Activity executions for every tool call it made.
